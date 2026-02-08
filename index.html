@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProposalForge - AI-Powered Professional Application Platform</title>
+    <title>ProposalForge - AI-Powered Professional Application Platform (OpenAI GPT-4)</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -61,6 +61,41 @@
             padding: 3rem 0;
             border-bottom: 1px solid var(--border-subtle);
             animation: slideDown 0.8s ease-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-content {
+            flex: 1;
+        }
+        
+        .api-key-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .api-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--error);
+            animation: pulse 2s infinite;
+        }
+        
+        .api-indicator.active {
+            background: var(--success);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
         }
 
         @keyframes slideDown {
@@ -553,6 +588,79 @@
             background: linear-gradient(90deg, var(--accent-gold), var(--accent-amber));
             transition: width 0.5s ease;
         }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal {
+            background: var(--primary-medium);
+            border: 1px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--accent-gold);
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .info-box {
+            background: rgba(212, 165, 116, 0.1);
+            border-left: 3px solid var(--accent-gold);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .info-box a {
+            color: var(--accent-amber);
+            text-decoration: none;
+        }
+        
+        .info-box a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -562,33 +670,80 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // API Configuration
-        const API_URL = "https://api.anthropic.com/v1/messages";
-        const MODEL = "claude-sonnet-4-20250514";
+        // API Configuration - OpenAI
+        const API_URL = "https://api.openai.com/v1/chat/completions";
+        const MODEL = "gpt-4-turbo-preview"; // or "gpt-4", "gpt-3.5-turbo"
+        
+        // Get API key from localStorage or prompt user
+        function getAPIKey() {
+            let apiKey = localStorage.getItem('openai_api_key');
+            if (!apiKey) {
+                apiKey = prompt('Please enter your OpenAI API Key:\n\nYou can get one from https://platform.openai.com/api-keys\n\nYour key will be stored locally in your browser.');
+                if (apiKey) {
+                    localStorage.setItem('openai_api_key', apiKey.trim());
+                }
+            }
+            return apiKey;
+        }
 
-        // Utility function to call Claude API
-        async function callClaudeAPI(prompt, systemPrompt = "") {
+        // Utility function to call OpenAI API
+        async function callOpenAIAPI(prompt, systemPrompt = "") {
+            const apiKey = getAPIKey();
+            
+            if (!apiKey) {
+                throw new Error("OpenAI API key is required. Please refresh and enter your API key.");
+            }
+
             try {
+                const messages = [];
+                
+                // Add system message if provided
+                if (systemPrompt) {
+                    messages.push({
+                        role: "system",
+                        content: systemPrompt
+                    });
+                }
+                
+                // Add user message
+                messages.push({
+                    role: "user",
+                    content: prompt
+                });
+
                 const response = await fetch(API_URL, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKey}`
                     },
                     body: JSON.stringify({
                         model: MODEL,
+                        messages: messages,
                         max_tokens: 4000,
-                        system: systemPrompt,
-                        messages: [{ role: "user", content: prompt }],
+                        temperature: 0.7
                     }),
                 });
 
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || "API request failed");
+                }
+
                 const data = await response.json();
-                return data.content[0].text;
+                return data.choices[0].message.content;
             } catch (error) {
                 console.error("API Error:", error);
-                throw new Error("Failed to process with AI. Please try again.");
+                if (error.message.includes("API key")) {
+                    localStorage.removeItem('openai_api_key');
+                    throw new Error("Invalid API key. Please refresh the page and enter a valid OpenAI API key.");
+                }
+                throw new Error(`Failed to process with AI: ${error.message}`);
             }
         }
+        
+        // Alias for backward compatibility
+        const callClaudeAPI = callOpenAIAPI;
 
         // File reading utility
         function readFileAsText(file) {
@@ -609,6 +764,8 @@
             const [loading, setLoading] = useState(false);
             const [dragOver, setDragOver] = useState(false);
             const [formData, setFormData] = useState({});
+            const [showAPIModal, setShowAPIModal] = useState(false);
+            const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key'));
 
             const modules = [
                 { id: 'analysis', name: 'Document Analysis', icon: '📊' },
@@ -616,6 +773,24 @@
                 { id: 'cv', name: 'CV Tailoring', icon: '👤' },
                 { id: 'cover', name: 'Cover Letter', icon: '✉️' },
             ];
+            
+            const handleAPIKeyUpdate = (newKey) => {
+                if (newKey && newKey.trim()) {
+                    localStorage.setItem('openai_api_key', newKey.trim());
+                    setApiKeySet(true);
+                    setShowAPIModal(false);
+                } else {
+                    alert('Please enter a valid API key');
+                }
+            };
+            
+            const handleRemoveAPIKey = () => {
+                if (confirm('Are you sure you want to remove your API key? You will need to enter it again to use AI features.')) {
+                    localStorage.removeItem('openai_api_key');
+                    setApiKeySet(false);
+                    setShowAPIModal(false);
+                }
+            };
 
             const handleFileUpload = async (files, fileType) => {
                 const file = files[0];
@@ -893,9 +1068,29 @@ Format as a complete, ready-to-send cover letter.`;
             return (
                 <div className="container">
                     <header>
-                        <h1>ProposalForge</h1>
-                        <p className="subtitle">AI-Powered Professional Application & Proposal Platform</p>
+                        <div className="header-content">
+                            <h1>ProposalForge</h1>
+                            <p className="subtitle">AI-Powered Professional Application & Proposal Platform</p>
+                        </div>
+                        <div className="api-key-status">
+                            <div className={`api-indicator ${apiKeySet ? 'active' : ''}`}></div>
+                            <button 
+                                className="btn btn-secondary btn-small" 
+                                onClick={() => setShowAPIModal(true)}
+                            >
+                                {apiKeySet ? '🔑 API Key Set' : '⚠️ Set API Key'}
+                            </button>
+                        </div>
                     </header>
+
+                    {showAPIModal && (
+                        <APIKeyModal 
+                            onClose={() => setShowAPIModal(false)}
+                            onSave={handleAPIKeyUpdate}
+                            onRemove={handleRemoveAPIKey}
+                            hasKey={apiKeySet}
+                        />
+                    )}
 
                     <div className="main-grid">
                         <aside className="sidebar">
@@ -1359,6 +1554,74 @@ Format as a complete, ready-to-send cover letter.`;
                         </div>
                     )}
                 </>
+            );
+        }
+
+        // API Key Modal Component
+        function APIKeyModal({ onClose, onSave, onRemove, hasKey }) {
+            const [apiKey, setApiKey] = useState('');
+            
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h2>OpenAI API Configuration</h2>
+                        <p>
+                            Enter your OpenAI API key to enable AI-powered features. Your key is stored 
+                            locally in your browser and never sent to any server except OpenAI's API.
+                        </p>
+                        
+                        <div className="info-box">
+                            <strong>📌 How to get your API key:</strong><br/>
+                            1. Visit <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI API Keys</a><br/>
+                            2. Sign in or create an account<br/>
+                            3. Click "Create new secret key"<br/>
+                            4. Copy and paste it below
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>OpenAI API Key</label>
+                            <input 
+                                type="password"
+                                value={apiKey}
+                                onChange={(e) => setApiKey(e.target.value)}
+                                placeholder="sk-..."
+                                autoFocus
+                            />
+                        </div>
+                        
+                        <div className="info-box" style={{ background: 'rgba(232, 184, 109, 0.1)' }}>
+                            <strong>💡 Cost Information:</strong><br/>
+                            OpenAI charges per token used. Typical costs:<br/>
+                            • GPT-4: ~$0.03-0.12 per request<br/>
+                            • GPT-3.5: ~$0.001-0.005 per request<br/>
+                            Monitor usage at <a href="https://platform.openai.com/usage" target="_blank">OpenAI Usage</a>
+                        </div>
+                        
+                        <div className="modal-buttons">
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={() => onSave(apiKey)}
+                                disabled={!apiKey.trim()}
+                            >
+                                Save API Key
+                            </button>
+                            {hasKey && (
+                                <button 
+                                    className="btn btn-secondary" 
+                                    onClick={onRemove}
+                                >
+                                    Remove Key
+                                </button>
+                            )}
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={onClose}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
             );
         }
 

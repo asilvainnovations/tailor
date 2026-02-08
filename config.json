@@ -1,0 +1,113 @@
+{
+  "platform": {
+    "name": "ProposalForge",
+    "version": "1.0.0",
+    "description": "AI-Powered Professional Application & Proposal Platform"
+  },
+  "api": {
+    "endpoint": "https://api.anthropic.com/v1/messages",
+    "model": "claude-sonnet-4-20250514",
+    "maxTokens": 4000,
+    "note": "API key is not stored in config for security - handled client-side"
+  },
+  "theme": {
+    "colors": {
+      "primaryDark": "#1a2332",
+      "primaryMedium": "#2d3e50",
+      "accentGold": "#d4a574",
+      "accentAmber": "#e8b86d",
+      "textLight": "#f8f9fa",
+      "textMuted": "#a0aec0",
+      "success": "#48bb78",
+      "error": "#f56565"
+    },
+    "typography": {
+      "headingFont": "Playfair Display",
+      "bodyFont": "IBM Plex Sans",
+      "headingFontUrl": "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap",
+      "bodyFontUrl": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+    }
+  },
+  "modules": [
+    {
+      "id": "analysis",
+      "name": "Document Analysis",
+      "icon": "📊",
+      "enabled": true,
+      "description": "Analyze TOR and extract key requirements"
+    },
+    {
+      "id": "proposal",
+      "name": "Proposal Generation",
+      "icon": "📝",
+      "enabled": true,
+      "description": "Generate comprehensive technical and financial proposals"
+    },
+    {
+      "id": "cv",
+      "name": "CV Tailoring",
+      "icon": "👤",
+      "enabled": true,
+      "description": "Customize CV to match job requirements"
+    },
+    {
+      "id": "cover",
+      "name": "Cover Letter",
+      "icon": "✉️",
+      "enabled": true,
+      "description": "Generate personalized cover letters"
+    }
+  ],
+  "fileUpload": {
+    "acceptedFormats": [".txt", ".pdf", ".doc", ".docx"],
+    "maxFileSize": 10485760,
+    "maxFileSizeMB": 10
+  },
+  "export": {
+    "formats": ["pdf", "docx"],
+    "defaultFormat": "docx"
+  },
+  "features": {
+    "dragAndDrop": true,
+    "realTimePreview": true,
+    "autoSave": false,
+    "darkMode": true,
+    "analytics": false
+  },
+  "deployment": {
+    "environment": "production",
+    "cdn": {
+      "react": "https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js",
+      "reactDom": "https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js",
+      "babel": "https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js",
+      "jspdf": "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+      "docx": "https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.min.js",
+      "fileSaver": "https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"
+    }
+  },
+  "systemPrompts": {
+    "analysis": "You are an expert document analyst specializing in Terms of Reference (TOR) and job applications. Provide detailed, structured analysis focusing on requirements, evaluation criteria, and deliverables.",
+    "proposal": "You are an expert proposal writer with extensive experience in preparing winning technical and financial proposals for international organizations, consulting firms, and government agencies. Your proposals are known for being comprehensive, compliant, and persuasive.",
+    "cv": "You are a professional CV writer and career consultant. You specialize in tailoring CVs to match specific job requirements while maintaining authenticity and professional standards.",
+    "coverLetter": "You are an expert cover letter writer who creates compelling, personalized cover letters that effectively communicate candidate strengths and genuine interest in opportunities."
+  },
+  "customization": {
+    "allowBrandingChanges": true,
+    "allowModuleToggle": true,
+    "allowThemeCustomization": true
+  },
+  "security": {
+    "clientSideProcessing": true,
+    "noServerStorage": true,
+    "httpsOnly": true,
+    "apiKeyHandling": "client-side"
+  },
+  "metadata": {
+    "author": "ProposalForge Team",
+    "license": "MIT",
+    "repository": "https://github.com/yourorg/proposalforge",
+    "documentation": "README.md",
+    "created": "2026-02-08",
+    "lastUpdated": "2026-02-08"
+  }
+}

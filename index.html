@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProposalForge - AI-Powered Professional Application Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --primary-dark: #1a2332;
+            --primary-medium: #2d3e50;
+            --accent-gold: #d4a574;
+            --accent-amber: #e8b86d;
+            --text-light: #f8f9fa;
+            --text-muted: #a0aec0;
+            --border-subtle: rgba(212, 165, 116, 0.2);
+            --success: #48bb78;
+            --error: #f56565;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: linear-gradient(135deg, #1a2332 0%, #2d3e50 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .grain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        header {
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-subtle);
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-weight: 300;
+            letter-spacing: 0.02em;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+            animation: fadeIn 1s ease-out 0.3s backwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 2rem;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-amber);
+        }
+
+        .nav-item {
+            padding: 0.875rem 1.25rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 400;
+        }
+
+        .nav-item:hover {
+            background: rgba(212, 165, 116, 0.1);
+            border-color: var(--border-subtle);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(212, 165, 116, 0.2), rgba(232, 184, 109, 0.15));
+            border-color: var(--accent-gold);
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+        }
+
+        .content-area {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 2.5rem;
+            min-height: 600px;
+            backdrop-filter: blur(10px);
+        }
+
+        .module-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .module-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-amber);
+        }
+
+        .module-description {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 2rem;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-gold);
+            background: rgba(212, 165, 116, 0.05);
+        }
+
+        .upload-zone.drag-over {
+            border-color: var(--accent-amber);
+            background: rgba(232, 184, 109, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.6;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-amber));
+            color: var(--primary-dark);
+            box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 165, 116, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-gold);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .uploaded-file {
+            background: rgba(212, 165, 116, 0.1);
+            border: 1px solid var(--accent-gold);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .file-icon {
+            color: var(--accent-gold);
+        }
+
+        .remove-file {
+            background: transparent;
+            border: none;
+            color: var(--error);
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .remove-file:hover {
+            transform: scale(1.2);
+        }
+
+        .analysis-output {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            animation: expandIn 0.5s ease-out;
+        }
+
+        @keyframes expandIn {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 2000px;
+            }
+        }
+
+        .analysis-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .analysis-section h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--accent-gold);
+            margin-bottom: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .analysis-section p,
+        .analysis-section ul {
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+
+        .analysis-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .analysis-section li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .analysis-section li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-gold);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(212, 165, 116, 0.2);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--accent-amber);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.875rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .export-options {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: rgba(72, 187, 120, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-pending {
+            background: rgba(212, 165, 116, 0.2);
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+        }
+
+        .generated-content {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .tips-panel {
+            background: rgba(212, 165, 116, 0.1);
+            border-left: 3px solid var(--accent-gold);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .tips-panel h4 {
+            color: var(--accent-amber);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .tips-panel p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 968px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .compliance-check {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .compliance-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--success);
+        }
+
+        .compliance-item.warning {
+            border-left-color: var(--accent-gold);
+        }
+
+        .compliance-item.error {
+            border-left-color: var(--error);
+        }
+
+        .progress-indicator {
+            margin: 2rem 0;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-amber));
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="grain-overlay"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // API Configuration
+        const API_URL = "https://api.anthropic.com/v1/messages";
+        const MODEL = "claude-sonnet-4-20250514";
+
+        // Utility function to call Claude API
+        async function callClaudeAPI(prompt, systemPrompt = "") {
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        model: MODEL,
+                        max_tokens: 4000,
+                        system: systemPrompt,
+                        messages: [{ role: "user", content: prompt }],
+                    }),
+                });
+
+                const data = await response.json();
+                return data.content[0].text;
+            } catch (error) {
+                console.error("API Error:", error);
+                throw new Error("Failed to process with AI. Please try again.");
+            }
+        }
+
+        // File reading utility
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        // Main App Component
+        function App() {
+            const [activeModule, setActiveModule] = useState('analysis');
+            const [uploadedFiles, setUploadedFiles] = useState({});
+            const [analysisResult, setAnalysisResult] = useState(null);
+            const [generatedContent, setGeneratedContent] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [dragOver, setDragOver] = useState(false);
+            const [formData, setFormData] = useState({});
+
+            const modules = [
+                { id: 'analysis', name: 'Document Analysis', icon: '📊' },
+                { id: 'proposal', name: 'Proposal Generation', icon: '📝' },
+                { id: 'cv', name: 'CV Tailoring', icon: '👤' },
+                { id: 'cover', name: 'Cover Letter', icon: '✉️' },
+            ];
+
+            const handleFileUpload = async (files, fileType) => {
+                const file = files[0];
+                if (!file) return;
+
+                setUploadedFiles(prev => ({
+                    ...prev,
+                    [fileType]: file
+                }));
+            };
+
+            const handleDrop = (e, fileType) => {
+                e.preventDefault();
+                setDragOver(false);
+                handleFileUpload(e.dataTransfer.files, fileType);
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                setDragOver(true);
+            };
+
+            const handleDragLeave = () => {
+                setDragOver(false);
+            };
+
+            const removeFile = (fileType) => {
+                setUploadedFiles(prev => {
+                    const updated = { ...prev };
+                    delete updated[fileType];
+                    return updated;
+                });
+            };
+
+            const analyzeDocument = async () => {
+                if (!uploadedFiles.tor) {
+                    alert('Please upload a TOR document first');
+                    return;
+                }
+
+                setLoading(true);
+                try {
+                    const torContent = await readFileAsText(uploadedFiles.tor);
+                    
+                    const systemPrompt = `You are an expert document analyst specializing in Terms of Reference (TOR) and job applications. Provide detailed, structured analysis focusing on requirements, evaluation criteria, and deliverables.`;
+                    
+                    const prompt = `Analyze the following TOR/Job Application document and provide:
+
+1. KEY REQUIREMENTS: List all mandatory qualifications, skills, and experience needed
+2. EVALUATION CRITERIA: Identify how applications will be assessed
+3. DELIVERABLES: Extract expected outputs and deadlines
+4. COMPLIANCE CHECKLIST: What must be included in the application
+5. STRATEGIC INSIGHTS: Recommendations for a winning application
+
+Document:
+${torContent}
+
+Format your response with clear sections using the headings above.`;
+
+                    const result = await callClaudeAPI(prompt, systemPrompt);
+                    setAnalysisResult(result);
+                } catch (error) {
+                    alert(error.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const generateProposal = async () => {
+                if (!uploadedFiles.tor) {
+                    alert('Please upload a TOR document first');
+                    return;
+                }
+
+                setLoading(true);
+                try {
+                    const torContent = await readFileAsText(uploadedFiles.tor);
+                    
+                    const systemPrompt = `You are an expert proposal writer with extensive experience in preparing winning technical and financial proposals for international organizations, consulting firms, and government agencies. Your proposals are known for being comprehensive, compliant, and persuasive.`;
+                    
+                    const prompt = `Based on the TOR below, create a comprehensive professional proposal that includes:
+
+1. EXECUTIVE SUMMARY (compelling overview)
+2. UNDERSTANDING OF REQUIREMENTS (demonstrating comprehension)
+3. TECHNICAL APPROACH & METHODOLOGY (detailed work plan)
+4. IMPLEMENTATION TIMELINE (with milestones)
+5. TEAM COMPOSITION & QUALIFICATIONS (if applicable)
+6. RISK MANAGEMENT & MITIGATION
+7. QUALITY ASSURANCE MEASURES
+
+Additional Context:
+- Company/Individual Name: ${formData.entityName || 'To be filled'}
+- Relevant Experience: ${formData.experience || 'Professional experience as detailed in CV'}
+- Budget Range: ${formData.budget || 'Competitive and value-driven'}
+
+TOR Document:
+${torContent}
+
+Create a professional, persuasive proposal that directly addresses all requirements. Use professional business language and maintain a confident, capable tone throughout.`;
+
+                    const result = await callClaudeAPI(prompt, systemPrompt);
+                    setGeneratedContent(result);
+                } catch (error) {
+                    alert(error.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const tailorCV = async () => {
+                if (!uploadedFiles.cv || !uploadedFiles.tor) {
+                    alert('Please upload both CV and TOR documents');
+                    return;
+                }
+
+                setLoading(true);
+                try {
+                    const cvContent = await readFileAsText(uploadedFiles.cv);
+                    const torContent = await readFileAsText(uploadedFiles.tor);
+                    
+                    const systemPrompt = `You are a professional CV writer and career consultant. You specialize in tailoring CVs to match specific job requirements while maintaining authenticity and professional standards.`;
+                    
+                    const prompt = `Tailor the CV below to match the TOR/Job requirements. 
+
+INSTRUCTIONS:
+1. Reorganize and highlight experiences that directly match the TOR requirements
+2. Emphasize relevant skills and achievements
+3. Add quantifiable results where applicable
+4. Adjust the professional summary to align with the role
+5. Maintain professional formatting and consistency
+6. Keep all information truthful - only reorganize and emphasize, don't fabricate
+
+TOR/Job Requirements:
+${torContent}
+
+Original CV:
+${cvContent}
+
+Provide a professionally tailored CV that maximizes alignment with the requirements while maintaining authenticity.`;
+
+                    const result = await callClaudeAPI(prompt, systemPrompt);
+                    setGeneratedContent(result);
+                } catch (error) {
+                    alert(error.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const generateCoverLetter = async () => {
+                if (!uploadedFiles.tor) {
+                    alert('Please upload a TOR document first');
+                    return;
+                }
+
+                setLoading(true);
+                try {
+                    const torContent = await readFileAsText(uploadedFiles.tor);
+                    const cvContent = uploadedFiles.cv ? await readFileAsText(uploadedFiles.cv) : '';
+                    
+                    const systemPrompt = `You are an expert cover letter writer who creates compelling, personalized cover letters that effectively communicate candidate strengths and genuine interest in opportunities.`;
+                    
+                    const prompt = `Create a professional cover letter for the following opportunity:
+
+TOR/Job Description:
+${torContent}
+
+${cvContent ? `Candidate Background (CV):\n${cvContent}\n` : ''}
+
+Additional Information:
+- Candidate Name: ${formData.candidateName || '[Your Name]'}
+- Key Motivation: ${formData.motivation || 'Strong alignment with role requirements and organizational mission'}
+- Unique Value Proposition: ${formData.uniqueValue || 'Proven track record and relevant expertise'}
+
+The cover letter should:
+1. Open with a compelling hook that demonstrates knowledge of the organization
+2. Clearly articulate why the candidate is an excellent fit
+3. Highlight 2-3 key relevant achievements or experiences
+4. Demonstrate genuine enthusiasm and cultural alignment
+5. Close with a confident call to action
+6. Be concise (not exceeding one page)
+7. Use professional but warm tone
+
+Format as a complete, ready-to-send cover letter.`;
+
+                    const result = await callClaudeAPI(prompt, systemPrompt);
+                    setGeneratedContent(result);
+                } catch (error) {
+                    alert(error.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const exportAsPDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 20;
+                const maxLineWidth = pageWidth - (margin * 2);
+                
+                let yPosition = margin;
+                
+                // Add title
+                doc.setFontSize(16);
+                doc.setFont(undefined, 'bold');
+                doc.text('Generated Document', margin, yPosition);
+                yPosition += 10;
+                
+                // Add date
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, yPosition);
+                yPosition += 15;
+                
+                // Add content
+                doc.setFontSize(11);
+                const content = generatedContent || analysisResult || 'No content to export';
+                const lines = doc.splitTextToSize(content, maxLineWidth);
+                
+                lines.forEach(line => {
+                    if (yPosition > pageHeight - margin) {
+                        doc.addPage();
+                        yPosition = margin;
+                    }
+                    doc.text(line, margin, yPosition);
+                    yPosition += 7;
+                });
+                
+                doc.save(`${activeModule}_${Date.now()}.pdf`);
+            };
+
+            const exportAsDOCX = async () => {
+                const { Document, Paragraph, TextRun, Packer } = window.docx;
+                
+                const content = generatedContent || analysisResult || 'No content to export';
+                const paragraphs = content.split('\n\n').map(para => 
+                    new Paragraph({
+                        children: [new TextRun(para)],
+                        spacing: { after: 200 }
+                    })
+                );
+                
+                const doc = new Document({
+                    sections: [{
+                        properties: {},
+                        children: [
+                            new Paragraph({
+                                children: [new TextRun({
+                                    text: 'Generated Document',
+                                    bold: true,
+                                    size: 32
+                                })],
+                                spacing: { after: 400 }
+                            }),
+                            new Paragraph({
+                                children: [new TextRun({
+                                    text: `Generated: ${new Date().toLocaleDateString()}`,
+                                    italics: true,
+                                    size: 20
+                                })],
+                                spacing: { after: 400 }
+                            }),
+                            ...paragraphs
+                        ]
+                    }]
+                });
+                
+                const blob = await Packer.toBlob(doc);
+                saveAs(blob, `${activeModule}_${Date.now()}.docx`);
+            };
+
+            return (
+                <div className="container">
+                    <header>
+                        <h1>ProposalForge</h1>
+                        <p className="subtitle">AI-Powered Professional Application & Proposal Platform</p>
+                    </header>
+
+                    <div className="main-grid">
+                        <aside className="sidebar">
+                            <h2>Modules</h2>
+                            {modules.map(module => (
+                                <div
+                                    key={module.id}
+                                    className={`nav-item ${activeModule === module.id ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveModule(module.id);
+                                        setGeneratedContent(null);
+                                        setAnalysisResult(null);
+                                    }}
+                                >
+                                    <span className="nav-icon">{module.icon}</span>
+                                    {module.name}
+                                </div>
+                            ))}
+                        </aside>
+
+                        <main className="content-area">
+                            {activeModule === 'analysis' && (
+                                <DocumentAnalysis
+                                    uploadedFiles={uploadedFiles}
+                                    handleFileUpload={handleFileUpload}
+                                    handleDrop={handleDrop}
+                                    handleDragOver={handleDragOver}
+                                    handleDragLeave={handleDragLeave}
+                                    dragOver={dragOver}
+                                    removeFile={removeFile}
+                                    analyzeDocument={analyzeDocument}
+                                    analysisResult={analysisResult}
+                                    loading={loading}
+                                    exportAsPDF={exportAsPDF}
+                                    exportAsDOCX={exportAsDOCX}
+                                />
+                            )}
+
+                            {activeModule === 'proposal' && (
+                                <ProposalGeneration
+                                    uploadedFiles={uploadedFiles}
+                                    handleFileUpload={handleFileUpload}
+                                    handleDrop={handleDrop}
+                                    handleDragOver={handleDragOver}
+                                    handleDragLeave={handleDragLeave}
+                                    dragOver={dragOver}
+                                    removeFile={removeFile}
+                                    formData={formData}
+                                    setFormData={setFormData}
+                                    generateProposal={generateProposal}
+                                    generatedContent={generatedContent}
+                                    loading={loading}
+                                    exportAsPDF={exportAsPDF}
+                                    exportAsDOCX={exportAsDOCX}
+                                />
+                            )}
+
+                            {activeModule === 'cv' && (
+                                <CVTailoring
+                                    uploadedFiles={uploadedFiles}
+                                    handleFileUpload={handleFileUpload}
+                                    handleDrop={handleDrop}
+                                    handleDragOver={handleDragOver}
+                                    handleDragLeave={handleDragLeave}
+                                    dragOver={dragOver}
+                                    removeFile={removeFile}
+                                    tailorCV={tailorCV}
+                                    generatedContent={generatedContent}
+                                    loading={loading}
+                                    exportAsPDF={exportAsPDF}
+                                    exportAsDOCX={exportAsDOCX}
+                                />
+                            )}
+
+                            {activeModule === 'cover' && (
+                                <CoverLetterGeneration
+                                    uploadedFiles={uploadedFiles}
+                                    handleFileUpload={handleFileUpload}
+                                    handleDrop={handleDrop}
+                                    handleDragOver={handleDragOver}
+                                    handleDragLeave={handleDragLeave}
+                                    dragOver={dragOver}
+                                    removeFile={removeFile}
+                                    formData={formData}
+                                    setFormData={setFormData}
+                                    generateCoverLetter={generateCoverLetter}
+                                    generatedContent={generatedContent}
+                                    loading={loading}
+                                    exportAsPDF={exportAsPDF}
+                                    exportAsDOCX={exportAsDOCX}
+                                />
+                            )}
+                        </main>
+                    </div>
+                </div>
+            );
+        }
+
+        // Document Analysis Component
+        function DocumentAnalysis({ 
+            uploadedFiles, handleFileUpload, handleDrop, handleDragOver, 
+            handleDragLeave, dragOver, removeFile, analyzeDocument, 
+            analysisResult, loading, exportAsPDF, exportAsDOCX 
+        }) {
+            return (
+                <>
+                    <div className="module-header">
+                        <h2>Document Analysis & Evaluation</h2>
+                        <p className="module-description">
+                            Upload your TOR or job application document for comprehensive AI-powered analysis.
+                            Extract key requirements, evaluation criteria, and strategic insights.
+                        </p>
+                    </div>
+
+                    <FileUploadZone
+                        label="Upload TOR / Job Application"
+                        fileType="tor"
+                        uploadedFile={uploadedFiles.tor}
+                        handleFileUpload={handleFileUpload}
+                        handleDrop={handleDrop}
+                        handleDragOver={handleDragOver}
+                        handleDragLeave={handleDragLeave}
+                        dragOver={dragOver}
+                        removeFile={removeFile}
+                    />
+
+                    <div className="action-buttons">
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={analyzeDocument}
+                            disabled={!uploadedFiles.tor || loading}
+                        >
+                            {loading ? 'Analyzing...' : 'Analyze Document'}
+                        </button>
+                    </div>
+
+                    {loading && (
+                        <div className="loading">
+                            <div className="spinner"></div>
+                            <span>AI is analyzing your document...</span>
+                        </div>
+                    )}
+
+                    {analysisResult && (
+                        <div className="analysis-output">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ fontFamily: "'Playfair Display', serif", color: 'var(--accent-gold)' }}>
+                                    Analysis Results
+                                </h3>
+                                <span className="status-badge status-success">✓ Complete</span>
+                            </div>
+                            <div className="generated-content">{analysisResult}</div>
+                            <div className="export-options">
+                                <button className="btn btn-secondary" onClick={exportAsPDF}>
+                                    Export as PDF
+                                </button>
+                                <button className="btn btn-secondary" onClick={exportAsDOCX}>
+                                    Export as DOCX
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        }
+
+        // Proposal Generation Component
+        function ProposalGeneration({ 
+            uploadedFiles, handleFileUpload, handleDrop, handleDragOver, 
+            handleDragLeave, dragOver, removeFile, formData, setFormData,
+            generateProposal, generatedContent, loading, exportAsPDF, exportAsDOCX 
+        }) {
+            return (
+                <>
+                    <div className="module-header">
+                        <h2>Proposal Generation</h2>
+                        <p className="module-description">
+                            Generate comprehensive technical and financial proposals that are professionally 
+                            formatted, compliant, and tailored to your TOR requirements.
+                        </p>
+                    </div>
+
+                    <FileUploadZone
+                        label="Upload TOR Document"
+                        fileType="tor"
+                        uploadedFile={uploadedFiles.tor}
+                        handleFileUpload={handleFileUpload}
+                        handleDrop={handleDrop}
+                        handleDragOver={handleDragOver}
+                        handleDragLeave={handleDragLeave}
+                        dragOver={dragOver}
+                        removeFile={removeFile}
+                    />
+
+                    <div className="form-group">
+                        <label>Company/Individual Name</label>
+                        <input 
+                            type="text"
+                            value={formData.entityName || ''}
+                            onChange={(e) => setFormData({...formData, entityName: e.target.value})}
+                            placeholder="Enter company or individual name"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Relevant Experience Summary</label>
+                        <textarea
+                            value={formData.experience || ''}
+                            onChange={(e) => setFormData({...formData, experience: e.target.value})}
+                            placeholder="Briefly describe relevant experience and qualifications"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Budget Range (Optional)</label>
+                        <input 
+                            type="text"
+                            value={formData.budget || ''}
+                            onChange={(e) => setFormData({...formData, budget: e.target.value})}
+                            placeholder="e.g., $50,000 - $75,000 or 'Competitive'"
+                        />
+                    </div>
+
+                    <div className="tips-panel">
+                        <h4>💡 Pro Tips</h4>
+                        <p>Provide as much context as possible for the best results. The AI will structure your proposal with executive summary, methodology, timeline, and quality assurance sections.</p>
+                    </div>
+
+                    <div className="action-buttons">
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={generateProposal}
+                            disabled={!uploadedFiles.tor || loading}
+                        >
+                            {loading ? 'Generating...' : 'Generate Proposal'}
+                        </button>
+                    </div>
+
+                    {loading && (
+                        <div className="loading">
+                            <div className="spinner"></div>
+                            <span>AI is crafting your professional proposal...</span>
+                        </div>
+                    )}
+
+                    {generatedContent && (
+                        <div className="analysis-output">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ fontFamily: "'Playfair Display', serif", color: 'var(--accent-gold)' }}>
+                                    Generated Proposal
+                                </h3>
+                                <span className="status-badge status-success">✓ Ready</span>
+                            </div>
+                            <div className="generated-content">{generatedContent}</div>
+                            <div className="export-options">
+                                <button className="btn btn-secondary" onClick={exportAsPDF}>
+                                    Export as PDF
+                                </button>
+                                <button className="btn btn-secondary" onClick={exportAsDOCX}>
+                                    Export as DOCX
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        }
+
+        // CV Tailoring Component
+        function CVTailoring({ 
+            uploadedFiles, handleFileUpload, handleDrop, handleDragOver, 
+            handleDragLeave, dragOver, removeFile, tailorCV, 
+            generatedContent, loading, exportAsPDF, exportAsDOCX 
+        }) {
+            return (
+                <>
+                    <div className="module-header">
+                        <h2>CV Tailoring</h2>
+                        <p className="module-description">
+                            Customize your CV to perfectly match TOR requirements. AI will reorganize and 
+                            emphasize relevant experience while maintaining authenticity and professional formatting.
+                        </p>
+                    </div>
+
+                    <FileUploadZone
+                        label="Upload Your CV"
+                        fileType="cv"
+                        uploadedFile={uploadedFiles.cv}
+                        handleFileUpload={handleFileUpload}
+                        handleDrop={handleDrop}
+                        handleDragOver={handleDragOver}
+                        handleDragLeave={handleDragLeave}
+                        dragOver={dragOver}
+                        removeFile={removeFile}
+                    />
+
+                    <FileUploadZone
+                        label="Upload TOR / Job Description"
+                        fileType="tor"
+                        uploadedFile={uploadedFiles.tor}
+                        handleFileUpload={handleFileUpload}
+                        handleDrop={handleDrop}
+                        handleDragOver={handleDragOver}
+                        handleDragLeave={handleDragLeave}
+                        dragOver={dragOver}
+                        removeFile={removeFile}
+                    />
+
+                    <div className="tips-panel">
+                        <h4>🎯 How It Works</h4>
+                        <p>The AI analyzes both documents and reorganizes your CV to highlight experiences that match the job requirements. All information remains truthful - we only optimize presentation.</p>
+                    </div>
+
+                    <div className="action-buttons">
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={tailorCV}
+                            disabled={!uploadedFiles.cv || !uploadedFiles.tor || loading}
+                        >
+                            {loading ? 'Tailoring...' : 'Tailor CV'}
+                        </button>
+                    </div>
+
+                    {loading && (
+                        <div className="loading">
+                            <div className="spinner"></div>
+                            <span>AI is optimizing your CV...</span>
+                        </div>
+                    )}
+
+                    {generatedContent && (
+                        <div className="analysis-output">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ fontFamily: "'Playfair Display', serif", color: 'var(--accent-gold)' }}>
+                                    Tailored CV
+                                </h3>
+                                <span className="status-badge status-success">✓ Optimized</span>
+                            </div>
+                            <div className="generated-content">{generatedContent}</div>
+                            <div className="export-options">
+                                <button className="btn btn-secondary" onClick={exportAsPDF}>
+                                    Export as PDF
+                                </button>
+                                <button className="btn btn-secondary" onClick={exportAsDOCX}>
+                                    Export as DOCX
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        }
+
+        // Cover Letter Generation Component
+        function CoverLetterGeneration({ 
+            uploadedFiles, handleFileUpload, handleDrop, handleDragOver, 
+            handleDragLeave, dragOver, removeFile, formData, setFormData,
+            generateCoverLetter, generatedContent, loading, exportAsPDF, exportAsDOCX 
+        }) {
+            return (
+                <>
+                    <div className="module-header">
+                        <h2>Cover Letter Generation</h2>
+                        <p className="module-description">
+                            Create compelling, personalized cover letters that effectively communicate your 
+                            strengths and genuine interest in the opportunity.
+                        </p>
+                    </div>
+
+                    <FileUploadZone
+                        label="Upload TOR / Job Description"
+                        fileType="tor"
+                        uploadedFile={uploadedFiles.tor}
+                        handleFileUpload={handleFileUpload}
+                        handleDrop={handleDrop}
+                        handleDragOver={handleDragOver}
+                        handleDragLeave={handleDragLeave}
+                        dragOver={dragOver}
+                        removeFile={removeFile}
+                    />
+
+                    <FileUploadZone
+                        label="Upload Your CV (Optional - for better personalization)"
+                        fileType="cv"
+                        uploadedFile={uploadedFiles.cv}
+                        handleFileUpload={handleFileUpload}
+                        handleDrop={handleDrop}
+                        handleDragOver={handleDragOver}
+                        handleDragLeave={handleDragLeave}
+                        dragOver={dragOver}
+                        removeFile={removeFile}
+                    />
+
+                    <div className="form-group">
+                        <label>Your Name</label>
+                        <input 
+                            type="text"
+                            value={formData.candidateName || ''}
+                            onChange={(e) => setFormData({...formData, candidateName: e.target.value})}
+                            placeholder="Enter your full name"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Key Motivation</label>
+                        <textarea
+                            value={formData.motivation || ''}
+                            onChange={(e) => setFormData({...formData, motivation: e.target.value})}
+                            placeholder="Why are you interested in this opportunity? What excites you about it?"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Unique Value Proposition</label>
+                        <textarea
+                            value={formData.uniqueValue || ''}
+                            onChange={(e) => setFormData({...formData, uniqueValue: e.target.value})}
+                            placeholder="What makes you uniquely qualified? What specific value do you bring?"
+                        />
+                    </div>
+
+                    <div className="tips-panel">
+                        <h4>✨ Crafting Excellence</h4>
+                        <p>A great cover letter balances professionalism with personality. The AI will create a compelling narrative that connects your background to the opportunity.</p>
+                    </div>
+
+                    <div className="action-buttons">
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={generateCoverLetter}
+                            disabled={!uploadedFiles.tor || loading}
+                        >
+                            {loading ? 'Generating...' : 'Generate Cover Letter'}
+                        </button>
+                    </div>
+
+                    {loading && (
+                        <div className="loading">
+                            <div className="spinner"></div>
+                            <span>AI is crafting your cover letter...</span>
+                        </div>
+                    )}
+
+                    {generatedContent && (
+                        <div className="analysis-output">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ fontFamily: "'Playfair Display', serif", color: 'var(--accent-gold)' }}>
+                                    Generated Cover Letter
+                                </h3>
+                                <span className="status-badge status-success">✓ Ready</span>
+                            </div>
+                            <div className="generated-content">{generatedContent}</div>
+                            <div className="export-options">
+                                <button className="btn btn-secondary" onClick={exportAsPDF}>
+                                    Export as PDF
+                                </button>
+                                <button className="btn btn-secondary" onClick={exportAsDOCX}>
+                                    Export as DOCX
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        }
+
+        // Reusable File Upload Zone Component
+        function FileUploadZone({ 
+            label, fileType, uploadedFile, handleFileUpload, 
+            handleDrop, handleDragOver, handleDragLeave, dragOver, removeFile 
+        }) {
+            return (
+                <div>
+                    <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--accent-amber)' }}>
+                        {label}
+                    </h3>
+                    {!uploadedFile ? (
+                        <div
+                            className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
+                            onDrop={(e) => handleDrop(e, fileType)}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onClick={() => document.getElementById(`file-${fileType}`).click()}
+                        >
+                            <div className="upload-icon">📄</div>
+                            <p style={{ marginBottom: '0.5rem', fontSize: '1.05rem' }}>
+                                Drag & drop your file here
+                            </p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                or click to browse
+                            </p>
+                            <input
+                                id={`file-${fileType}`}
+                                type="file"
+                                className="file-input"
+                                accept=".txt,.pdf,.doc,.docx"
+                                onChange={(e) => handleFileUpload(e.target.files, fileType)}
+                            />
+                        </div>
+                    ) : (
+                        <div className="uploaded-file">
+                            <div className="file-info">
+                                <span className="file-icon">📄</span>
+                                <div>
+                                    <div style={{ fontWeight: '500' }}>{uploadedFile.name}</div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                        {(uploadedFile.size / 1024).toFixed(2)} KB
+                                    </div>
+                                </div>
+                            </div>
+                            <button className="remove-file" onClick={() => removeFile(fileType)}>
+                                ✕
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
